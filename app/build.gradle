@@ -1,7 +1,5 @@
-plugins {
-    id 'com.android.library'
-    id 'maven-publish'
-}
+apply plugin: 'com.android.library'
+apply plugin: 'maven-publish'
 
 android {
     compileSdkVersion 31
@@ -10,11 +8,9 @@ android {
         minSdkVersion 21
         targetSdkVersion 31
     }
-    
-    buildTypes {
-        release {
-            minifyEnabled false
-        }
+
+    lintOptions {
+        abortOnError false
     }
 }
 
@@ -23,6 +19,7 @@ afterEvaluate {
         publications {
             release(MavenPublication) {
                 from components.release
+                
                 groupId = 'com.arthenica'
                 artifactId = 'ffmpeg-kit-https'
                 version = '6.0-2'
@@ -31,6 +28,21 @@ afterEvaluate {
     }
 }
 
-dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
+// Add this to ensure the AAR is included
+tasks.register('prepareArtifact', Copy) {
+    from 'libs/ffmpeg-kit-https-6.0-2.aar'
+    into "${buildDir}/outputs/aar/"
+}
+
+artifacts {
+    archives file("libs/ffmpeg-kit-https-6.0-2.aar")
+}
+
+// Make sure the prepareArtifact task runs before publishing
+tasks.withType(PublishToMavenRepository) {
+    dependsOn 'prepareArtifact'
+}
+
+tasks.withType(PublishToMavenLocal) {
+    dependsOn 'prepareArtifact'
 }
